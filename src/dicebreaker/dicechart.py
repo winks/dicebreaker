@@ -4,12 +4,16 @@ import logging
 
 class DiceChart():
     chart = None
-    def __init__(self, data, width = 300, height = 300):
+    def __init__(self, data, iter = 0, width = 300, height = 300):
         self.chart = SimpleLineChart(width, height, y_range=(0, 10))
         legend = []
         colors = ['cc0000','00cc00','0000cc',
                   '990000','009900','000099',
-                  '0099ff','FF9900','9900ff']
+                  '0099ff','FF9900',
+                  '9900ff','ff0099']
+        title = 'die rolls per objective'
+        if iter > 0:
+            title = title + " (%s samples)" % iter
         for i in data.keys():
             self.chart.add_data(data[i])
             legend.append(str(i))
@@ -26,9 +30,11 @@ class DiceChart():
         left_axis[0] = ''
         self.chart.set_axis_labels(Axis.LEFT, left_axis)
 
-        bottom_len = len(data[i])+1
-        bottom_axis = range(1, bottom_len, 1)
+        bottom_len = len(data[i])+2
+        bottom_axis = range(2, bottom_len, 1)
         self.chart.set_axis_labels(Axis.BOTTOM, bottom_axis)
+        
+        self.chart.set_title(title)
 
     def download(self, name = 'dicechart.png'):
         self.chart.download(name)

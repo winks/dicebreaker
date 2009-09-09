@@ -21,6 +21,25 @@ class Die:
         self.min = min
         self.expand = expand
 
+class Runner:
+    config = None
+    die = None
+    def __init__(self, config, die):
+        self.config = config
+        self.die = die
+    def run(self):
+        results = {}
+        for i in range(self.config.num_min, self.config.num_max):
+            results[i] = []
+            for j in range(self.config.objective_min, self.config.objective_max+1):
+                m = Model_SR(self.die, i, j, self.config.iterations)
+                m.start()
+                print "objective: " + str(m.objective),
+                print "    runs : " + str(m.iterations)
+                print "passes   : " + str(m.getAverage()) + " / " + str(m.num)
+                print ""
+                results[i].append(m.getAverage())
+        return results
 
 class Model_SR:
     " a calculation model for SR"
