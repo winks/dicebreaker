@@ -13,13 +13,17 @@ class Config:
 
 class Die:
     """ an ordinary die. 
-        has a max value, 
-        a min value of 1 or more and 
+        has a max value 
+        has a min value of 1 or more
         may expand on a max value roll"""
     def __init__(self, max, min=1, expand = True):
         self.max = max
         self.min = min
         self.expand = expand
+    def roll(self):
+        my_roll = random.randrange(self.min, self.max+1)
+        return my_roll
+        
 
 class Runner:
     config = None
@@ -38,8 +42,49 @@ class Runner:
                 print "    runs : " + str(m.iterations)
                 print "passes   : " + str(m.getAverage()) + " / " + str(m.num)
                 print ""
+                logging.debug(m.result)
                 results[i].append(m.getAverage())
         return results
+
+    def drun(self):
+        results = {}
+        for i in range(0, self.config.num_max):
+            print i
+            m = Model_DSA(self.die, self.config.num_max, self.config.iterations)
+            m.start()
+
+class Model:
+    " a default calculation model "
+    dice = None
+    number = 0
+    objective = {}
+    result = {}
+    passes = {}
+    iterations = 1
+
+    def __init__(self, dice, num, obj, iter = 1):
+        self.name = "Model_D" + str(dice.max) + "_N" + str(num)
+        self.dice = dice
+        self.number = num
+        self.objective = obj
+        self.iterations = iter
+
+    def throw(self, num_dice):
+        result = {}
+        for num in range(num_dice):
+            result[num] = self.dice.roll()
+            tmp = result[num]
+            if self.dice.expand == True:
+                while tmp == self.dice.max:
+                    tmp = self.dice.roll()
+                    result[num] = result[num] + tmp
+        return result
+
+    def start(self):
+        pass
+
+    def getAverage(self):
+        pass
 
 class Model_SR:
     " a calculation model for SR"
@@ -51,7 +96,7 @@ class Model_SR:
     iterations = 1
   
     def __init__(self, dice, num, obj, iter = 1):
-        self.name = "Model_D" + str(dice.max) + "_" + str(num) + "_" + str(obj)
+        self.name = "Model_D" + str(dice.max) + "_N" + str(num)
         self.dice = dice
         self.num = num
         self.objective = obj
@@ -61,11 +106,11 @@ class Model_SR:
         #logging.debug("throwing %s dice" % str(num_dice))
         my_throws = []
         for _ in range(num_dice):
-            result = random.randrange(self.dice.min, self.dice.max+1)
+            result = self.dice.roll()
             tmp = result
             if self.dice.expand == True:
                 while tmp == self.dice.max:
-                    tmp = random.randrange(self.dice.min, self.dice.max+1)
+                    tmp = self.dice.roll()
                     result = result + tmp
             #logging.debug("result: %s" % result)
             my_throws.append(result)
@@ -87,3 +132,26 @@ class Model_SR:
             sum += self.passes[i]
             dbg = dbg + str(i) + "_"
         return (float(sum) / float(_len))
+
+class Model_DSA(Model):
+    " a calculation model for DSA "
+
+    def start(self):
+        for i in range(0, self.iterations):
+            logging.debug("iter: " + str(i))
+            self.result[i] = self.throw(self.num)
+            print "self.throw():",
+            print self.result[i]
+            self.passes[i] = {}
+            for j in self.result[i].keys():
+#                if j >= self.objective[j]:
+                 self.passes[i][j] = abs(self.result[i][j]-self.objective[j])
+
+
+    def getAverage(seld):
+        _len = len(self.passes)
+        sum = 0
+        for i in self.passes.keys():
+            sum += self.passes[i]
+        return (float(sum) / float(_len))
+
